@@ -9,17 +9,17 @@ class RepositoryImporter
     
     loop do
       repos = @github_api_service.get_organization_repos(org_name, page: page, per_page: 100)
-      break if repos.empty?
       
       imported_count = import_repositories(repos)
       total_imported += imported_count
       
-      # If we got less than 100 repos, we've reached the end
+      # Since our limit is 100 repos, get outta here if we have less than the limit
       break if repos.length < 100
       
       page += 1
     end
     
+    ##Just for testing purposes
     total_imported
   end
 
@@ -31,12 +31,18 @@ class RepositoryImporter
     repos_data.each do |repo_data|
       begin
         repository = find_or_create_repository(repo_data)
-        imported_count += 1 if repository.persisted?
+        if repository.persisted?
+          imported_count += 1
+          puts "Imported repository: #{repository.name}"
+        else
+          puts "Failed to save repository #{repo_data['name']}: #{repository.errors.full_messages.join(', ')}"
+        end
       rescue => e
         puts "Error importing repository #{repo_data['name']}: #{e.message}"
       end
     end
     
+    #Just for testing purposes
     imported_count
   end
 

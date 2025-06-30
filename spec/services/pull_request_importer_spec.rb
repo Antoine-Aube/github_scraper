@@ -89,7 +89,6 @@ RSpec.describe PullRequestImporter do
     end
 
     it 'does not create duplicate pull requests' do
-      # Import twice
       importer.import_repository_pull_requests(repository)
       importer.import_repository_pull_requests(repository)
       

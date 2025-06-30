@@ -16,7 +16,7 @@ RSpec.describe GithubApiService do
           repo = repos.first
           expect(repo['name']).to be_present
           expect(repo['html_url']).to be_present
-          expect(repo).to have_key('private') # Check that the field exists, regardless of value
+          expect(repo).to have_key('private')
         end
       end
     end
@@ -80,7 +80,6 @@ RSpec.describe GithubApiService do
 
   describe '#get_repository_pull_requests' do
     it 'returns pull requests for a Vercel repository' do
-      # Use a popular Vercel repo that likely has PRs
       pull_requests = service.get_repository_pull_requests('vercel', 'next.js', per_page: 5)
       
       expect(pull_requests).to be_an(Array)
@@ -99,7 +98,6 @@ RSpec.describe GithubApiService do
 
   describe '#get_pull_request_reviews' do
     it 'returns reviews for a pull request' do
-      # Use a more realistic PR number from next.js
       reviews = service.get_pull_request_reviews('vercel', 'next.js', 1000, per_page: 5)
       
       expect(reviews).to be_an(Array)
@@ -112,18 +110,6 @@ RSpec.describe GithubApiService do
         expect(review['user']).to be_present
         expect(review['submitted_at']).to be_present
       end
-    end
-  end
-
-  describe '#get_user' do
-    it 'returns user data' do
-      user = service.get_user('vercel')
-      
-      expect(user).to be_a(Hash)
-      expect(user['login']).to eq('vercel')
-      expect(user['id']).to be_present
-      expect(user['name']).to be_present
-      expect(user['created_at']).to be_present
     end
   end
 

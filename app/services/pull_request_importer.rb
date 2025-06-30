@@ -17,6 +17,7 @@ class PullRequestImporter
         page: page, 
         per_page: 100
       )
+
       break if pull_requests.empty?
       
       imported_count = import_pull_requests(pull_requests, repository)
@@ -39,7 +40,7 @@ class PullRequestImporter
       parts = repo_name.split('/')
       [parts.first, parts.last]
     else
-      # Default to 'vercel' as owner if no owner specified
+      # Default to 'vercel' as owner if no owner specified just for the purpose of this project
       ['vercel', repo_name]
     end
   end
@@ -56,11 +57,13 @@ class PullRequestImporter
       end
     end
     
+    ##Just for testing purposes
     imported_count
   end
 
   def find_or_create_pull_request(pr_data, repository)
     author = find_or_create_user(pr_data['user'])
+    #For data integrity, we don't want to import PRs without an author
     return nil unless author
 
     pr = PullRequest.find_or_initialize_by(number: pr_data['number'], repository: repository)

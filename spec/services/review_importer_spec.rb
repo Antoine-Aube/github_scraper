@@ -83,7 +83,7 @@ RSpec.describe ReviewImporter do
 
       expect { review_importer.import_reviews_for_pull_request(pull_request) }
         .to change { Review.count }.by(2)
-        .and change { User.count }.by(1) # Only one new user
+        .and change { User.count }.by(1)
 
       review = Review.find_by(github_id: 789)
       expect(review.user).to eq(existing_user)
@@ -99,7 +99,7 @@ RSpec.describe ReviewImporter do
       )
 
       expect { review_importer.import_reviews_for_pull_request(pull_request) }
-        .to change { Review.count }.by(1) # Only one new review
+        .to change { Review.count }.by(1)
 
       existing_review.reload
       expect(existing_review.state).to eq('APPROVED')

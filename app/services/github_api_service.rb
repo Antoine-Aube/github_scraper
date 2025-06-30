@@ -1,6 +1,7 @@
 class GithubApiService
   include HTTParty
   
+  ##Headers, access token is stored in ENV file for security
   base_uri 'https://api.github.com'
   headers 'Authorization' => "Bearer #{ENV['GITHUB_ACCESS_TOKEN']}",
           'Accept' => 'application/vnd.github.v3+json',
@@ -11,21 +12,21 @@ class GithubApiService
     @rate_limit_reset = Time.now
   end
 
-  # Organization endpoints
+  # Repos call
   def get_organization_repos(org_name, page: 1, per_page: 100)
     begin
       response = self.class.get("/orgs/#{org_name}/repos", query: { page: page, per_page: per_page })
       handle_response(response)
     rescue GithubApiError => e
       if e.message.include?('Rate limit exceeded')
-        handle_rate_limit_and_retry(org_name, page, per_page)
+        handle_rate_limit_and_retry(:get_organization_repos, org_name, page, per_page)
       else
         raise e
       end
     end
   end
 
-  # Repository endpoints
+  # Repository call
   def get_repository_pull_requests(owner, repo, state: 'all', page: 1, per_page: 100)
     begin
       response = self.class.get("/repos/#{owner}/#{repo}/pulls", 
@@ -33,14 +34,14 @@ class GithubApiService
       handle_response(response)
     rescue GithubApiError => e
       if e.message.include?('Rate limit exceeded')
-        handle_rate_limit_and_retry_pulls(owner, repo, state, page, per_page)
+        handle_rate_limit_and_retry(:get_repository_pull_requests, owner, repo, state, page, per_page)
       else
         raise e
       end
     end
   end
 
-  # Pull Request endpoints
+  # Pull Request call
   def get_pull_request_reviews(owner, repo, pull_number, page: 1, per_page: 100)
     begin
       response = self.class.get("/repos/#{owner}/#{repo}/pulls/#{pull_number}/reviews",
@@ -48,21 +49,7 @@ class GithubApiService
       handle_response(response)
     rescue GithubApiError => e
       if e.message.include?('Rate limit exceeded')
-        handle_rate_limit_and_retry_reviews(owner, repo, pull_number, page, per_page)
-      else
-        raise e
-      end
-    end
-  end
-
-  # User endpoints
-  def get_user(username)
-    begin
-      response = self.class.get("/users/#{username}")
-      handle_response(response)
-    rescue GithubApiError => e
-      if e.message.include?('Rate limit exceeded')
-        handle_rate_limit_and_retry_user(username)
+        handle_rate_limit_and_retry(:get_pull_request_reviews, owner, repo, pull_number, page, per_page)
       else
         raise e
       end
@@ -79,7 +66,9 @@ class GithubApiService
   end
 
   private
+  
 
+  #Error handling for different status codes
   def handle_response(response)
     case response.code
     when 200
@@ -105,53 +94,23 @@ class GithubApiService
     @rate_limit_reset = Time.at(response.headers['x-ratelimit-reset'].to_i)
   end
 
-  def handle_rate_limit_and_retry(org_name, page, per_page)
+  #handle retry base on the endpoint we're calling
+  def handle_rate_limit_and_retry(method_name, *args)
     reset_time = @rate_limit_reset
     wait_time = (reset_time - Time.now).ceil
     
     if wait_time > 0
       sleep(wait_time)
-      # Retry the request
-      get_organization_repos(org_name, page: page, per_page: per_page)
-    else
-      raise GithubApiError, "Rate limit exceeded and reset time has passed"
-    end
-  end
-
-  def handle_rate_limit_and_retry_pulls(owner, repo, state, page, per_page)
-    reset_time = @rate_limit_reset
-    wait_time = (reset_time - Time.now).ceil
-    
-    if wait_time > 0
-      sleep(wait_time)
-      # Retry the request
-      get_repository_pull_requests(owner, repo, state: state, page: page, per_page: per_page)
-    else
-      raise GithubApiError, "Rate limit exceeded and reset time has passed"
-    end
-  end
-
-  def handle_rate_limit_and_retry_reviews(owner, repo, pull_number, page, per_page)
-    reset_time = @rate_limit_reset
-    wait_time = (reset_time - Time.now).ceil
-    
-    if wait_time > 0
-      sleep(wait_time)
-      # Retry the request
-      get_pull_request_reviews(owner, repo, pull_number, page: page, per_page: per_page)
-    else
-      raise GithubApiError, "Rate limit exceeded and reset time has passed"
-    end
-  end
-
-  def handle_rate_limit_and_retry_user(username)
-    reset_time = @rate_limit_reset
-    wait_time = (reset_time - Time.now).ceil
-    
-    if wait_time > 0
-      sleep(wait_time)
-      # Retry the request
-      get_user(username)
+      case method_name
+      when :get_organization_repos
+        get_organization_repos(*args)
+      when :get_repository_pull_requests
+        get_repository_pull_requests(*args)
+      when :get_pull_request_reviews
+        get_pull_request_reviews(*args)
+      else
+        raise GithubApiError, "Unknown method: #{method_name}"
+      end
     else
       raise GithubApiError, "Rate limit exceeded and reset time has passed"
     end

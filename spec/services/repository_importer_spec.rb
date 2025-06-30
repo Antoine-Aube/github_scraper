@@ -48,7 +48,6 @@ RSpec.describe RepositoryImporter do
     end
 
     it 'does not create duplicate repositories' do
-      # Import twice
       importer.import_organization_repos('vercel')
       importer.import_organization_repos('vercel')
       
