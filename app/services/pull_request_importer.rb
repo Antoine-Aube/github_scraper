@@ -22,6 +22,7 @@ class PullRequestImporter
         page: page, 
         per_page: 100
       )
+      Rails.logger.info "API returned #{pull_requests.length} pull requests"
       break if pull_requests.empty?
       
       Rails.logger.info "Received #{pull_requests.length} pull requests from API"
@@ -55,13 +56,15 @@ class PullRequestImporter
   end
 
   def import_pull_requests(pull_requests_data, repository)
+    Rails.logger.info "Starting import_pull_requests with #{pull_requests_data.length} PRs"
     imported_count = 0
     
     pull_requests_data.each do |pr_data|
       begin
         Rails.logger.info "Processing PR ##{pr_data['number']}: #{pr_data['title']}"
         pull_request = find_or_create_pull_request(pr_data, repository)
-        imported_count += 1 if pull_request.persisted?
+        Rails.logger.info "find_or_create_pull_request returned: #{pull_request.inspect}"
+        imported_count += 1 if pull_request&.persisted?
         Rails.logger.info "Successfully processed PR ##{pr_data['number']}"
       rescue => e
         Rails.logger.error "Failed to import pull request #{pr_data['number']}: #{e.message}"
@@ -69,25 +72,26 @@ class PullRequestImporter
       end
     end
     
+    Rails.logger.info "import_pull_requests finished, imported: #{imported_count}"
     imported_count
   end
 
   def find_or_create_pull_request(pr_data, repository)
-    # First, ensure we have a valid author
     author = find_or_create_user(pr_data['user'])
-    return nil unless author # Skip if we can't create the author
-    
-    PullRequest.find_or_create_by(number: pr_data['number'], repository: repository) do |pr|
-      pr.title = pr_data['title']
-      pr.updated_at = pr_data['updated_at']
-      pr.closed_at = pr_data['closed_at']
-      pr.merged_at = pr_data['merged_at']
-      pr.additions = pr_data['additions']
-      pr.deletions = pr_data['deletions']
-      pr.changed_files = pr_data['changed_files']
-      pr.commits_count = pr_data['commits']
-      pr.author = author
-    end
+    return nil unless author
+
+    pr = PullRequest.find_or_initialize_by(number: pr_data['number'], repository: repository)
+    pr.title = pr_data['title']
+    pr.updated_at = pr_data['updated_at']
+    pr.closed_at = pr_data['closed_at']
+    pr.merged_at = pr_data['merged_at']
+    pr.additions = pr_data['additions']
+    pr.deletions = pr_data['deletions']
+    pr.changed_files = pr_data['changed_files']
+    pr.commits_count = pr_data['commits']
+    pr.author = author
+    pr.save!
+    pr
   end
 
   def find_or_create_user(user_data)

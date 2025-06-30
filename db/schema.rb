@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_30_024915) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_30_043330) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -20,13 +20,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_30_024915) do
     t.string "title"
     t.datetime "closed_at"
     t.datetime "merged_at"
-    t.string "author"
     t.integer "additions"
     t.integer "deletions"
     t.integer "changed_files"
     t.integer "commits_count"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "author_id", null: false
+    t.index ["author_id"], name: "index_pull_requests_on_author_id"
     t.index ["repository_id"], name: "index_pull_requests_on_repository_id"
   end
 
@@ -59,6 +60,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_30_024915) do
   end
 
   add_foreign_key "pull_requests", "repositories"
+  add_foreign_key "pull_requests", "users", column: "author_id"
   add_foreign_key "reviews", "pull_requests"
   add_foreign_key "reviews", "users"
 end
