@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_30_043330) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_30_045039) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -47,6 +47,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_30_043330) do
     t.datetime "submitted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "github_id"
+    t.text "body"
+    t.string "commit_id"
     t.index ["pull_request_id"], name: "index_reviews_on_pull_request_id"
     t.index ["user_id"], name: "index_reviews_on_user_id"
   end
