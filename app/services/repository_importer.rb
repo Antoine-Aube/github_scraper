@@ -4,21 +4,15 @@ class RepositoryImporter
   end
 
   def import_organization_repos(org_name)
-    Rails.logger.info "Starting import of repositories for organization: #{org_name}"
-    
     page = 1
     total_imported = 0
     
     loop do
-      Rails.logger.info "Fetching repositories page #{page} for #{org_name}"
-      
       repos = @github_api_service.get_organization_repos(org_name, page: page, per_page: 100)
       break if repos.empty?
       
       imported_count = import_repositories(repos)
       total_imported += imported_count
-      
-      Rails.logger.info "Imported #{imported_count} repositories from page #{page}"
       
       # If we got less than 100 repos, we've reached the end
       break if repos.length < 100
@@ -26,7 +20,6 @@ class RepositoryImporter
       page += 1
     end
     
-    Rails.logger.info "Completed import of #{total_imported} repositories for #{org_name}"
     total_imported
   end
 
@@ -40,7 +33,7 @@ class RepositoryImporter
         repository = find_or_create_repository(repo_data)
         imported_count += 1 if repository.persisted?
       rescue => e
-        Rails.logger.error "Failed to import repository #{repo_data['name']}: #{e.message}"
+        puts "Error importing repository #{repo_data['name']}: #{e.message}"
       end
     end
     

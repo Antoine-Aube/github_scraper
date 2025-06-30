@@ -110,7 +110,6 @@ class GithubApiService
     wait_time = (reset_time - Time.now).ceil
     
     if wait_time > 0
-      Rails.logger.warn "Rate limit exceeded. Waiting #{wait_time} seconds..."
       sleep(wait_time)
       # Retry the request
       get_organization_repos(org_name, page: page, per_page: per_page)
@@ -124,7 +123,6 @@ class GithubApiService
     wait_time = (reset_time - Time.now).ceil
     
     if wait_time > 0
-      Rails.logger.warn "Rate limit exceeded. Waiting #{wait_time} seconds..."
       sleep(wait_time)
       # Retry the request
       get_repository_pull_requests(owner, repo, state: state, page: page, per_page: per_page)
@@ -138,7 +136,6 @@ class GithubApiService
     wait_time = (reset_time - Time.now).ceil
     
     if wait_time > 0
-      Rails.logger.warn "Rate limit exceeded. Waiting #{wait_time} seconds..."
       sleep(wait_time)
       # Retry the request
       get_pull_request_reviews(owner, repo, pull_number, page: page, per_page: per_page)
@@ -152,7 +149,6 @@ class GithubApiService
     wait_time = (reset_time - Time.now).ceil
     
     if wait_time > 0
-      Rails.logger.warn "Rate limit exceeded. Waiting #{wait_time} seconds..."
       sleep(wait_time)
       # Retry the request
       get_user(username)

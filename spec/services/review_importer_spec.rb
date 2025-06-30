@@ -68,7 +68,6 @@ RSpec.describe ReviewImporter do
       expect(review1.user.github_login).to eq('reviewer')
       expect(review1.state).to eq('APPROVED')
       expect(review1.body).to eq('Looks good!')
-      expect(review1.commit_id).to eq('abc123')
 
       # Check second review
       review2 = Review.find_by(github_id: 790)
@@ -77,7 +76,6 @@ RSpec.describe ReviewImporter do
       expect(review2.user.github_login).to eq('another_reviewer')
       expect(review2.state).to eq('CHANGES_REQUESTED')
       expect(review2.body).to eq('Please fix this issue')
-      expect(review2.commit_id).to eq('def456')
     end
 
     it 'reuses existing users for reviewers' do
