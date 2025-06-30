@@ -25,6 +25,21 @@ class GithubApiService
     end
   end
 
+  # Repository endpoints
+  def get_repository_pull_requests(owner, repo, state: 'all', page: 1, per_page: 100)
+    begin
+      response = self.class.get("/repos/#{owner}/#{repo}/pulls", 
+                               query: { state: state, page: page, per_page: per_page })
+      handle_response(response)
+    rescue GithubApiError => e
+      if e.message.include?('Rate limit exceeded')
+        handle_rate_limit_and_retry_pulls(owner, repo, state, page, per_page)
+      else
+        raise e
+      end
+    end
+  end
+
   # Rate limiting info
   def rate_limit_remaining
     @rate_limit_remaining
@@ -70,6 +85,20 @@ class GithubApiService
       sleep(wait_time)
       # Retry the request
       get_organization_repos(org_name, page: page, per_page: per_page)
+    else
+      raise GithubApiError, "Rate limit exceeded and reset time has passed"
+    end
+  end
+
+  def handle_rate_limit_and_retry_pulls(owner, repo, state, page, per_page)
+    reset_time = @rate_limit_reset
+    wait_time = (reset_time - Time.now).ceil
+    
+    if wait_time > 0
+      Rails.logger.warn "Rate limit exceeded. Waiting #{wait_time} seconds..."
+      sleep(wait_time)
+      # Retry the request
+      get_repository_pull_requests(owner, repo, state: state, page: page, per_page: per_page)
     else
       raise GithubApiError, "Rate limit exceeded and reset time has passed"
     end

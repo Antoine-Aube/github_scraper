@@ -78,6 +78,25 @@ RSpec.describe GithubApiService do
     end
   end
 
+  describe '#get_repository_pull_requests' do
+    it 'returns pull requests for a Vercel repository' do
+      # Use a popular Vercel repo that likely has PRs
+      pull_requests = service.get_repository_pull_requests('vercel', 'next.js', per_page: 5)
+      
+      expect(pull_requests).to be_an(Array)
+      expect(pull_requests.length).to be <= 5
+      
+      if pull_requests.any?
+        pr = pull_requests.first
+        expect(pr['number']).to be_present
+        expect(pr['title']).to be_present
+        expect(pr['html_url']).to be_present
+        expect(pr).to have_key('state')
+        expect(pr['user']).to be_present
+      end
+    end
+  end
+
   describe '#rate_limit_remaining' do
     it 'returns rate limit remaining' do
       expect(service).to respond_to(:rate_limit_remaining)
