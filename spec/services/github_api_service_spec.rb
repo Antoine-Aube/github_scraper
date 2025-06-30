@@ -97,6 +97,24 @@ RSpec.describe GithubApiService do
     end
   end
 
+  describe '#get_pull_request_reviews' do
+    it 'returns reviews for a pull request' do
+      # Use a more realistic PR number from next.js
+      reviews = service.get_pull_request_reviews('vercel', 'next.js', 1000, per_page: 5)
+      
+      expect(reviews).to be_an(Array)
+      expect(reviews.length).to be <= 5
+      
+      if reviews.any?
+        review = reviews.first
+        expect(review['id']).to be_present
+        expect(review).to have_key('state')
+        expect(review['user']).to be_present
+        expect(review['submitted_at']).to be_present
+      end
+    end
+  end
+
   describe '#rate_limit_remaining' do
     it 'returns rate limit remaining' do
       expect(service).to respond_to(:rate_limit_remaining)
