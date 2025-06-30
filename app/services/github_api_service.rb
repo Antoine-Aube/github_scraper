@@ -55,6 +55,20 @@ class GithubApiService
     end
   end
 
+  # User endpoints
+  def get_user(username)
+    begin
+      response = self.class.get("/users/#{username}")
+      handle_response(response)
+    rescue GithubApiError => e
+      if e.message.include?('Rate limit exceeded')
+        handle_rate_limit_and_retry_user(username)
+      else
+        raise e
+      end
+    end
+  end
+
   # Rate limiting info
   def rate_limit_remaining
     @rate_limit_remaining
@@ -128,6 +142,20 @@ class GithubApiService
       sleep(wait_time)
       # Retry the request
       get_pull_request_reviews(owner, repo, pull_number, page: page, per_page: per_page)
+    else
+      raise GithubApiError, "Rate limit exceeded and reset time has passed"
+    end
+  end
+
+  def handle_rate_limit_and_retry_user(username)
+    reset_time = @rate_limit_reset
+    wait_time = (reset_time - Time.now).ceil
+    
+    if wait_time > 0
+      Rails.logger.warn "Rate limit exceeded. Waiting #{wait_time} seconds..."
+      sleep(wait_time)
+      # Retry the request
+      get_user(username)
     else
       raise GithubApiError, "Rate limit exceeded and reset time has passed"
     end

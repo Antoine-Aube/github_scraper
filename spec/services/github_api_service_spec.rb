@@ -115,6 +115,18 @@ RSpec.describe GithubApiService do
     end
   end
 
+  describe '#get_user' do
+    it 'returns user data' do
+      user = service.get_user('vercel')
+      
+      expect(user).to be_a(Hash)
+      expect(user['login']).to eq('vercel')
+      expect(user['id']).to be_present
+      expect(user['name']).to be_present
+      expect(user['created_at']).to be_present
+    end
+  end
+
   describe '#rate_limit_remaining' do
     it 'returns rate limit remaining' do
       expect(service).to respond_to(:rate_limit_remaining)
