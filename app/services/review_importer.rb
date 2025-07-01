@@ -1,20 +1,31 @@
 class ReviewImporter
+  include GithubHelpers
+  
   def initialize(github_api_service = GithubApiService.new)
     @github_api_service = github_api_service
   end
 
   def import_reviews_for_pull_request(pull_request)
-    # Extract owner and repo from name
-    owner, repo = pull_request.repository.name.split('/')
+    owner, repo_name = parse_repository_name(pull_request.repository.name)
     
-    reviews_data = @github_api_service.get_pull_request_reviews(
-      owner,
-      repo,
-      pull_request.number
-    )
-    
-    reviews_data.each do |review_data|
-      import_review(review_data, pull_request)
+    begin
+      reviews_data = @github_api_service.get_pull_request_reviews(
+        owner,
+        repo_name,
+        pull_request.number
+      )
+      
+      reviews_data.each do |review_data|
+        import_review(review_data, pull_request)
+      end
+    rescue GithubApiError => e
+      if e.message.include?('404')
+        puts "PR #{pull_request.number} in #{pull_request.repository.name} not found (404) - skipping reviews"
+      else
+        puts "Failed to import reviews for PR #{pull_request.number} in #{pull_request.repository.name}: #{e.message}"
+      end
+    rescue => e
+      puts "Unexpected error importing reviews for PR #{pull_request.number} in #{pull_request.repository.name}: #{e.message}"
     end
   end
 
@@ -32,14 +43,9 @@ class ReviewImporter
     if reviewer.new_record?
       reviewer.assign_attributes(
         github_login: review_data['user']['login'],
-        name: review_data['user']['name'] || review_data['user']['login'] # Use login as fallback if name is nil
+        name: review_data['user']['name'] 
       )
-      if reviewer.save!
-        puts "User created successfully #{reviewer.github_login}"
-      else
-        puts "Failed to create user #{reviewer.github_login}: #{reviewer.errors.full_messages.join(', ')}"
-        return
-      end
+      reviewer.save!
     end
 
     review = Review.find_or_initialize_by(github_id: review_data['id'])

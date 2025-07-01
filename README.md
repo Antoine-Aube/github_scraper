@@ -9,12 +9,12 @@ This is a Ruby on Rails application that scrapes GitHub data for organizations, 
 - **Pull Request Import**: Imports all pull requests for each repository, including metadata like additions, deletions, and commit counts
 - **Review Import**: Imports all reviews for each pull request
 - **User Import**: Automatically creates user records for PR authors and reviewers
-- **Data Relationships**: Maintains proper relationships between repositories, pull requests, reviews, and users
+- **Data Relationships**: Maintains proper relationships between repositories, pull requests, reviews, and users using foreign keys
 
 ### Key Features:
 - Rate limiting handling for GitHub API
 - Comprehensive error handling
-- Background job processing
+- Processing through a Job
 - RSpec test coverage
 - Simple command-line interface via rake tasks
 
@@ -74,6 +74,9 @@ rails github:stats
 
 # Clear all imported data
 rails github:clear
+
+# Short form test to see if all data is loading properly without running the entire program
+bundle exec rake test:e2e
 ```
 
 ### Example Output

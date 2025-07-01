@@ -1,4 +1,6 @@
 class PullRequestImporter
+  include GithubHelpers
+  
   def initialize(github_api_service = GithubApiService.new)
     @github_api_service = github_api_service
   end
@@ -8,7 +10,6 @@ class PullRequestImporter
     total_imported = 0
     
     loop do
-      # Parse owner and repo name from repository name
       owner, repo_name = parse_repository_name(repository.name)
       
       pull_requests = @github_api_service.get_repository_pull_requests(
@@ -23,7 +24,7 @@ class PullRequestImporter
       imported_count = import_pull_requests(pull_requests, repository)
       total_imported += imported_count
       
-      # If we got less than 100 PRs, we've reached the end
+      # If we got less than 100 PRs we know we've made our last call
       break if pull_requests.length < 100
       
       page += 1
@@ -34,23 +35,16 @@ class PullRequestImporter
 
   private
 
-  def parse_repository_name(repo_name)
-    # Handle both "owner/repo" and "repo" formats
-    if repo_name.include?('/')
-      parts = repo_name.split('/')
-      [parts.first, parts.last]
-    else
-      # Default to 'vercel' as owner if no owner specified just for the purpose of this project
-      ['vercel', repo_name]
-    end
-  end
-
   def import_pull_requests(pull_requests_data, repository)
     imported_count = 0
     
     pull_requests_data.each do |pr_data|
       begin
-        pull_request = find_or_create_pull_request(pr_data, repository)
+        # Get full PR details including statistics
+        owner, repo_name = parse_repository_name(repository.name)
+        full_pr_data = @github_api_service.get_pull_request(owner, repo_name, pr_data['number'])
+        
+        pull_request = find_or_create_pull_request(full_pr_data, repository)
         imported_count += 1 if pull_request&.persisted?
       rescue => e
         puts "Error importing pull request #{pr_data['number']}: #{e.message}"
@@ -75,7 +69,7 @@ class PullRequestImporter
     pr.deletions = pr_data['deletions']
     pr.changed_files = pr_data['changed_files']
     pr.commits_count = pr_data['commits']
-    pr.author = author
+    pr.author = author 
     pr.save!
     pr
   end

@@ -56,6 +56,20 @@ class GithubApiService
     end
   end
 
+  # Individual Pull Request for all the extra stats
+  def get_pull_request(owner, repo, pull_number)
+    begin
+      response = self.class.get("/repos/#{owner}/#{repo}/pulls/#{pull_number}")
+      handle_response(response)
+    rescue GithubApiError => e
+      if e.message.include?('Rate limit exceeded')
+        handle_rate_limit_and_retry(:get_pull_request, owner, repo, pull_number)
+      else
+        raise e
+      end
+    end
+  end
+
   # Rate limiting info
   def rate_limit_remaining
     @rate_limit_remaining
@@ -108,6 +122,8 @@ class GithubApiService
         get_repository_pull_requests(*args)
       when :get_pull_request_reviews
         get_pull_request_reviews(*args)
+      when :get_pull_request
+        get_pull_request(*args)
       else
         raise GithubApiError, "Unknown method: #{method_name}"
       end
