@@ -5,7 +5,7 @@
 This is a Ruby on Rails application that scrapes GitHub data for organizations, specifically designed to import repositories, pull requests, reviews, and users from GitHub's API. The project was built as a challenge to demonstrate full-stack development skills with a focus on data import and processing.
 
 ### What it does:
-- **Repository Import**: Fetches all repositories for a specified GitHub organization
+- **Repository Import**: Fetches all repositories for a specified GitHub organization(Vercel Organization if unspecified.)
 - **Pull Request Import**: Imports all pull requests for each repository, including metadata like additions, deletions, and commit counts
 - **Review Import**: Imports all reviews for each pull request
 - **User Import**: Automatically creates user records for PR authors and reviewers
@@ -93,6 +93,12 @@ rails github:clear
 🎉 All done! Check your database for the imported data.
 ```
 
+## Testing
+### To run the test
+
+```
+bundle exec rspec
+```
 ## Potential Improvements
 
 ### 1. Better Error Handling and Logging

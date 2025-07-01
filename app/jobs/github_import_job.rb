@@ -10,8 +10,8 @@ class GithubImportJob < ApplicationJob
     # Step 1: Import repositories
     repository_importer = RepositoryImporter.new(github_api_service)
     total_repos = repository_importer.import_organization_repos(org_name)
-    puts "Imported #{total_repos} repositories"
-    puts "Processing imports for PRs, reviews and relevant users"
+    puts "Imported #{total_repos} Repos"
+    puts "Importing Repo data..."
     
     # Step 2: Import pull requests for each repository
     pull_request_importer = PullRequestImporter.new(github_api_service)
